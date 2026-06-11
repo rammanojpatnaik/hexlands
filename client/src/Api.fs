@@ -9,7 +9,8 @@ open Hexlands.Types
 
 exception ApiError of string
 
-type private CreateGamePayload = { PlayerNames: string list }
+type private CreateGamePayload = { PlayerName: string; NumPlayers: int }
+type private JoinGamePayload = { PlayerName: string }
 type private VertexPayload = { Vertex: VertexCoord }
 type private EdgePayload = { Edge: EdgeCoord }
 type private TradePayload = { Give: string; Receive: string }
@@ -56,8 +57,11 @@ let private post (url: string) (body: string option) : Async<GameState> =
 let private encode payload =
     Encode.Auto.toString (space = 0, value = payload, caseStrategy = SnakeCase)
 
-let createGame (playerNames: string list) : Async<GameState> =
-    post "/game/new" (Some (encode { PlayerNames = playerNames }))
+let createGame (playerName: string) (numPlayers: int) : Async<GameState> =
+    post "/game/new" (Some (encode { PlayerName = playerName; NumPlayers = numPlayers }))
+
+let joinGame (gameId: string) (playerName: string) : Async<GameState> =
+    post (sprintf "/game/%s/join" gameId) (Some (encode { PlayerName = playerName }))
 
 let getGame (gameId: string) : Async<GameState> =
     get (sprintf "/game/%s" gameId)

@@ -20,12 +20,13 @@ hexlands/
 │       ├── Types.fs             # API contract types + Terrain discriminated union
 │       ├── HexGrid.fs           # Odd-r offset hex grid geometry (axial → odd-r → SVG)
 │       ├── Api.fs               # REST client (Fable.SimpleHttp + Thoth.Json)
-│       ├── GameState.fs         # Client store: WebSocket feed, reconnect, actions
+│       ├── GameState.fs         # Elmish model/update, hash routing, WS subscription
 │       ├── Board.fs             # Hex grid SVG component (terrain, tokens, robber)
 │       ├── Players.fs           # Sidebar player cards (resources, victory points)
 │       ├── Dice.fs              # Dice / actions panel (roll, end turn, dev card)
 │       ├── Trade.fs             # Bank trade panel (4:1)
-│       ├── App.fs               # React root: layout, turn indicator, banners
+│       ├── Home.fs              # Home page: create a game or join by id
+│       ├── App.fs               # Elmish program: routes home / lobby / game views
 │       └── styles.css           # Tailwind entry point
 └── server/                      # FastAPI backend
     ├── requirements.txt
@@ -83,7 +84,8 @@ malformed input returns **422**.
 
 | Method | Endpoint                           | Body                                  | Description                                        |
 | ------ | ---------------------------------- | ------------------------------------- | -------------------------------------------------- |
-| POST   | `/game/new`                        | `{player_names?, auto_setup?}`        | Create a game (auto_setup plays out setup randomly) |
+| POST   | `/game/new`                        | `{player_name, num_players?, auto_setup?}` | Open a lobby; returns the shareable game id   |
+| POST   | `/game/{id}/join`                  | `{player_name}`                       | Take a seat; the game starts when the lobby fills  |
 | GET    | `/game/{id}`                       | —                                     | Fetch current game state                           |
 | POST   | `/game/{id}/roll-dice`             | —                                     | Roll the dice and distribute production            |
 | POST   | `/game/{id}/place-settlement`      | `{"vertex": {"q","r","corner"}}`      | Build a settlement (setup or actions phase)        |
@@ -125,7 +127,8 @@ This is a playable scaffold, not the full ruleset yet:
 - ✅ Real resource production: settlements collect 1 and cities 2 from adjacent tiles on a matching roll; the robber blocks its tile
 - ✅ Turn rotation with phase guards (`setup` → `roll` → `actions` → next player), game log, and a 10-VP win check
 - ✅ Live multiplayer feed: `/ws/{game_id}` broadcasts the full state to every subscriber on each action, with snapshot-on-connect reconnect handling
-- ✅ F# client wired to the feed: a `GameState` store (Fable.SimpleHttp REST + native WebSocket with auto-reconnect) exposes action functions to React components
+- ✅ Lobby system: create a game from the home page (shareable id), friends join by id or invite link (`#/game/{id}`), 2–4 seats, the game starts automatically when the last seat fills
+- ✅ Elmish frontend: MVU state management with hash routing (home → lobby → game), Fable.SimpleHttp for REST, and the WebSocket feed as an Elmish subscription keyed by game id (auto-reconnect included)
 - ✅ Tailwind-styled UI: centered hex board, sidebar with dice/actions, 4:1 bank trade panel, player resource cards with victory points, header turn indicator, rule-violation banners, game log
 - 🚧 Roadmap: board UI for placing settlements/roads/cities by clicking vertices and edges, robber movement + discards on a 7, playing development cards, domestic trades, harbours (3:1 / 2:1), longest road / largest army
 

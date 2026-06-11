@@ -5,12 +5,9 @@ from ..models import DevCardType, GamePhase, GameState, Player, PlayerColor
 WINNING_POINTS = 10
 
 
-def create_players(names: list[str]) -> list[Player]:
-    colors = list(PlayerColor)
-    return [
-        Player(id=index, name=name, color=colors[index])
-        for index, name in enumerate(names)
-    ]
+def new_player(index: int, name: str) -> Player:
+    """A player taking the lobby's next seat; colors go by seat order."""
+    return Player(id=index, name=name, color=list(PlayerColor)[index])
 
 
 def recompute_victory_points(game: GameState) -> None:

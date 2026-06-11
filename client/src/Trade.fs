@@ -20,7 +20,7 @@ let private resourceSelect (caption: string) (value: string) (onChange: string -
 
 let view =
     FunctionComponent.Of(
-        (fun (props: {| Game: GameState |}) ->
+        (fun (props: {| Game: GameState; OnTrade: string * string -> unit |}) ->
             let give = Hooks.useState "wood"
             let receive = Hooks.useState "ore"
             let sameResource = give.current = receive.current
@@ -33,7 +33,7 @@ let view =
                     resourceSelect "Receive 1" receive.current (fun value -> receive.update value)
                 ]
                 button [ ClassName "w-full rounded-lg bg-amber-700 py-2 font-semibold text-white transition hover:bg-amber-800 disabled:cursor-default disabled:opacity-40"
-                         OnClick (fun _ -> GameState.tradeBank give.current receive.current)
+                         OnClick (fun _ -> props.OnTrade (give.current, receive.current))
                          Disabled (not active || sameResource) ] [ str "Trade" ]
                 (if sameResource then
                      p [ ClassName "text-xs text-stone-500" ] [ str "Pick two different resources." ]

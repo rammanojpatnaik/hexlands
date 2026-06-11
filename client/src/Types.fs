@@ -63,6 +63,7 @@ type GameState =
       Phase: string
       Tiles: Tile list
       Players: Player list
+      NumPlayers: int
       CurrentPlayer: int
       Robber: HexCoord
       LastRoll: DiceRoll option

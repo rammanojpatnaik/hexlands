@@ -22,6 +22,7 @@ from .game import actions, state
 from .models import (
     CreateGameRequest,
     GameState,
+    JoinGameRequest,
     PlaceCityRequest,
     PlaceRoadRequest,
     PlaceSettlementRequest,
@@ -64,12 +65,14 @@ router = APIRouter(prefix="/game", tags=["game"])
 @router.post("/new", response_model=GameState)
 def new_game(request: CreateGameRequest) -> GameState:
     # No broadcast: nobody can be subscribed before the game id exists.
-    try:
-        game = state.new_game(request.player_names, request.auto_setup)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    game = state.new_game(request.player_name, request.num_players, request.auto_setup)
     state.store.add(game)
     return game
+
+
+@router.post("/{game_id}/join", response_model=GameState)
+async def join_game(game_id: str, request: JoinGameRequest) -> GameState:
+    return await _broadcast(state.join_game(get_game_or_404(game_id), request.player_name))
 
 
 @router.get("/{game_id}", response_model=GameState)

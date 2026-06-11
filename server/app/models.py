@@ -71,6 +71,7 @@ class PlayerColor(str, Enum):
 
 
 class GamePhase(str, Enum):
+    LOBBY = "lobby"      # waiting for players to join
     SETUP = "setup"      # players place their two starting settlements + roads
     ROLL = "roll"        # waiting for the current player to roll
     ACTIONS = "actions"  # build / trade / play cards, then end the turn
@@ -192,9 +193,12 @@ class Player(BaseModel):
 
 class GameState(BaseModel):
     id: str
-    phase: GamePhase = GamePhase.SETUP
+    phase: GamePhase = GamePhase.LOBBY
     tiles: list[Tile]
-    players: list[Player] = Field(min_length=2, max_length=4)
+    # The lobby opens with just the host; num_players seats in total.
+    players: list[Player] = Field(min_length=1, max_length=4)
+    num_players: int = Field(default=3, ge=2, le=4)
+    auto_setup: bool = True  # play out the setup phase automatically when full
     turn_order: list[int]  # player ids in play order
     current_turn: int = 0  # index into turn_order
     turn_number: int = 1
@@ -243,14 +247,31 @@ class GameState(BaseModel):
 
 
 class CreateGameRequest(BaseModel):
-    player_names: list[str] = Field(
-        default_factory=lambda: ["Red", "Blue", "Orange"],
-        min_length=2,
-        max_length=4,
-    )
+    player_name: str = Field(default="Host", max_length=30)
+    num_players: int = Field(default=3, ge=2, le=4)
     # When true, the server plays out the setup phase with random
-    # rule-valid placements so the game starts ready to roll.
+    # rule-valid placements once everyone has joined.
     auto_setup: bool = True
+
+    @field_validator("player_name")
+    @classmethod
+    def _not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("player_name must not be blank")
+        return value
+
+
+class JoinGameRequest(BaseModel):
+    player_name: str = Field(max_length=30)
+
+    @field_validator("player_name")
+    @classmethod
+    def _not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("player_name must not be blank")
+        return value
 
 
 class PlaceSettlementRequest(BaseModel):
