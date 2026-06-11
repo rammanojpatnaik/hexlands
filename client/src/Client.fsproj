@@ -10,9 +10,11 @@
     <Compile Include="Types.fs" />
     <Compile Include="HexGrid.fs" />
     <Compile Include="Api.fs" />
+    <Compile Include="GameState.fs" />
     <Compile Include="Board.fs" />
     <Compile Include="Players.fs" />
     <Compile Include="Dice.fs" />
+    <Compile Include="Trade.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
 
@@ -20,8 +22,8 @@
     <PackageReference Include="Fable.Core" Version="4.3.0" />
     <PackageReference Include="Fable.React" Version="9.4.0" />
     <PackageReference Include="Fable.Browser.Dom" Version="2.16.0" />
-    <PackageReference Include="Fable.Fetch" Version="2.7.0" />
-    <PackageReference Include="Fable.Promise" Version="3.2.0" />
+    <PackageReference Include="Fable.Browser.WebSocket" Version="1.*" />
+    <PackageReference Include="Fable.SimpleHttp" Version="3.*" />
     <PackageReference Include="Thoth.Json" Version="10.2.0" />
   </ItemGroup>
 

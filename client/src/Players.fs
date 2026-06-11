@@ -1,41 +1,51 @@
-/// Player panel: names, color swatches, resource hands, victory points.
+/// Sidebar player cards: color swatch, resource hand, victory points.
 module Hexlands.Players
 
 open Fable.React
 open Fable.React.Props
 open Hexlands.Types
 
+let private resourceChip (name: string) (count: int) =
+    span [ Key name
+           ClassName "rounded-md bg-stone-100 px-2 py-0.5 text-xs text-stone-700" ] [
+        str (sprintf "%s %d" name count)
+    ]
+
 let private playerCard (isCurrent: bool) (player: Player) =
-    let count resource =
-        player.Resources
-        |> Map.tryFind resource
-        |> Option.defaultValue 0
+    let border =
+        if isCurrent then "border-blue-500 ring-2 ring-blue-200"
+        else "border-amber-200"
 
     div [ Key player.Name
-          ClassName (if isCurrent then "player-card current" else "player-card") ] [
-        div [ ClassName "player-name" ] [
-            span [ ClassName "player-swatch"
+          ClassName (sprintf "rounded-xl border bg-white p-3 shadow-sm %s" border) ] [
+        div [ ClassName "mb-2 flex items-center gap-2" ] [
+            span [ ClassName "h-3.5 w-3.5 rounded border border-black/20"
                    Style [ BackgroundColor (playerColor player.Color) ] ] []
-            str player.Name
+            span [ ClassName "font-semibold" ] [ str player.Name ]
             (if isCurrent then
-                 span [ ClassName "turn-badge" ] [ str "turn" ]
+                 span [ ClassName "ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white" ] [
+                     str "turn"
+                 ]
              else
                  nothing)
         ]
-        div [ ClassName "player-resources" ] (
+        div [ ClassName "flex flex-wrap gap-1.5" ] (
             resourceOrder
             |> List.map (fun resource ->
-                span [ Key resource; ClassName "resource" ] [
-                    str (sprintf "%s %d" resource (count resource))
-                ])
+                let count =
+                    player.Resources
+                    |> Map.tryFind resource
+                    |> Option.defaultValue 0
+
+                resourceChip resource count)
         )
-        div [ ClassName "player-vp" ] [
-            str (sprintf "%d VP" player.VictoryPoints)
+        div [ ClassName "mt-2 text-sm font-semibold text-amber-800" ] [
+            str (sprintf "%d victory points" player.VictoryPoints)
         ]
     ]
 
 let view (game: GameState) =
-    div [ ClassName "players" ] (
+    section [ ClassName "space-y-3" ] (
         game.Players
-        |> List.mapi (fun index player -> playerCard (index = game.CurrentPlayer) player)
+        |> List.map (fun player -> playerCard (player.Id = game.CurrentPlayer) player)
     )

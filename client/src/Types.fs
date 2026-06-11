@@ -2,7 +2,43 @@
 /// (snake_case fields on the wire, decoded via Thoth's SnakeCase strategy).
 module Hexlands.Types
 
+/// The six Catan terrain types.
+type Terrain =
+    | Forest    // produces wood
+    | Hills     // produces brick
+    | Pasture   // produces sheep
+    | Fields    // produces wheat
+    | Mountains // produces ore
+    | Desert    // produces nothing; the robber starts here
+
+module Terrain =
+    /// Parse the wire name used by the backend's Terrain enum.
+    let parse (name: string) : Terrain =
+        match name with
+        | "forest" -> Forest
+        | "hills" -> Hills
+        | "pasture" -> Pasture
+        | "fields" -> Fields
+        | "mountains" -> Mountains
+        | "desert" -> Desert
+        | other -> failwithf "Unknown terrain %s" other
+
+    let color (terrain: Terrain) =
+        match terrain with
+        | Forest -> "#2f7d32"
+        | Hills -> "#c8602d"
+        | Pasture -> "#8bc34a"
+        | Fields -> "#e7c12f"
+        | Mountains -> "#90a4ae"
+        | Desert -> "#e6d9a8"
+
 type HexCoord = { Q: int; R: int }
+
+/// A hex corner (0-5, clockwise from upper-right); settlements/cities sit here.
+type VertexCoord = { Q: int; R: int; Corner: int }
+
+/// A hex side (0-5, side i joins corners i and i+1); roads sit here.
+type EdgeCoord = { Q: int; R: int; Edge: int }
 
 type Tile =
     { Q: int
@@ -35,16 +71,6 @@ type GameState =
 
 /// Display order of resources in the UI.
 let resourceOrder = [ "wood"; "brick"; "sheep"; "wheat"; "ore" ]
-
-let terrainColor terrain =
-    match terrain with
-    | "hills" -> "#c8602d"
-    | "forest" -> "#2f7d32"
-    | "pasture" -> "#8bc34a"
-    | "fields" -> "#e7c12f"
-    | "mountains" -> "#90a4ae"
-    | "desert" -> "#e6d9a8"
-    | _ -> "#cccccc"
 
 let playerColor color =
     match color with

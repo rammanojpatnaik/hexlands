@@ -9,20 +9,24 @@ A full-stack Settlers of Catan board game, structured as a monorepo:
 hexlands/
 ├── client/                      # Fable + F# + Vite frontend
 │   ├── package.json             # npm deps and dev/build scripts
-│   ├── vite.config.js           # Vite config, proxies /api → :8000
+│   ├── vite.config.js           # Vite config, proxies /game + /ws → :8000
+│   ├── tailwind.config.js       # Tailwind setup (scans .fs files for classes)
+│   ├── postcss.config.js
 │   ├── index.html
 │   ├── .config/
 │   │   └── dotnet-tools.json    # pins the Fable compiler as a dotnet tool
 │   └── src/
 │       ├── Client.fsproj        # F# project: compile order + NuGet packages
-│       ├── Types.fs             # Domain types mirroring the API JSON contract
-│       ├── HexGrid.fs           # Axial hex coords → SVG pixel geometry
-│       ├── Api.fs               # Fetch + Thoth.Json client for the backend
-│       ├── Board.fs             # SVG board rendering (tiles, tokens, robber)
-│       ├── Players.fs           # Player panel (resources, victory points)
-│       ├── Dice.fs              # Dice panel (roll / end-turn controls)
-│       ├── App.fs               # React root, state management, entry point
-│       └── styles.css
+│       ├── Types.fs             # API contract types + Terrain discriminated union
+│       ├── HexGrid.fs           # Odd-r offset hex grid geometry (axial → odd-r → SVG)
+│       ├── Api.fs               # REST client (Fable.SimpleHttp + Thoth.Json)
+│       ├── GameState.fs         # Client store: WebSocket feed, reconnect, actions
+│       ├── Board.fs             # Hex grid SVG component (terrain, tokens, robber)
+│       ├── Players.fs           # Sidebar player cards (resources, victory points)
+│       ├── Dice.fs              # Dice / actions panel (roll, end turn, dev card)
+│       ├── Trade.fs             # Bank trade panel (4:1)
+│       ├── App.fs               # React root: layout, turn indicator, banners
+│       └── styles.css           # Tailwind entry point
 └── server/                      # FastAPI backend
     ├── requirements.txt
     └── app/
@@ -121,7 +125,9 @@ This is a playable scaffold, not the full ruleset yet:
 - ✅ Real resource production: settlements collect 1 and cities 2 from adjacent tiles on a matching roll; the robber blocks its tile
 - ✅ Turn rotation with phase guards (`setup` → `roll` → `actions` → next player), game log, and a 10-VP win check
 - ✅ Live multiplayer feed: `/ws/{game_id}` broadcasts the full state to every subscriber on each action, with snapshot-on-connect reconnect handling
-- 🚧 Roadmap: wiring the F# client to the WebSocket feed, board UI for placing pieces from the browser, robber movement + discards on a 7, playing development cards, domestic trades, harbours (3:1 / 2:1), longest road / largest army
+- ✅ F# client wired to the feed: a `GameState` store (Fable.SimpleHttp REST + native WebSocket with auto-reconnect) exposes action functions to React components
+- ✅ Tailwind-styled UI: centered hex board, sidebar with dice/actions, 4:1 bank trade panel, player resource cards with victory points, header turn indicator, rule-violation banners, game log
+- 🚧 Roadmap: board UI for placing settlements/roads/cities by clicking vertices and edges, robber movement + discards on a 7, playing development cards, domestic trades, harbours (3:1 / 2:1), longest road / largest army
 
 ## Notes
 

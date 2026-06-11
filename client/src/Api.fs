@@ -1,42 +1,84 @@
-/// HTTP client for the FastAPI backend. All endpoints return the full
-/// game state, decoded from snake_case JSON.
+/// REST client for the FastAPI backend, built on Fable.SimpleHttp.
+/// Every endpoint returns the full game state; rule violations (409)
+/// raise ApiError with the server's human-readable detail message.
 module Hexlands.Api
 
-open Fable.Core
-open Fable.Core.JsInterop
-open Fetch
+open Fable.SimpleHttp
 open Thoth.Json
 open Hexlands.Types
 
-type private CreateGameRequest = { PlayerNames: string list }
+exception ApiError of string
+
+type private CreateGamePayload = { PlayerNames: string list }
+type private VertexPayload = { Vertex: VertexCoord }
+type private EdgePayload = { Edge: EdgeCoord }
+type private TradePayload = { Give: string; Receive: string }
 
 let private decodeGame (json: string) : GameState =
     match Decode.Auto.fromString<GameState> (json, caseStrategy = SnakeCase) with
     | Ok game -> game
-    | Error message -> failwithf "Could not decode game state: %s" message
+    | Error message -> raise (ApiError (sprintf "Could not decode game state: %s" message))
 
-let private requestGame (url: string) (props: RequestProperties list) : JS.Promise<GameState> =
-    promise {
-        let! response = fetch url props
-        let! body = response.text ()
-        return decodeGame body
+/// Pull the "detail" field out of a FastAPI error body.
+let private detailOf (body: string) =
+    match Decode.fromString (Decode.field "detail" Decode.string) body with
+    | Ok detail -> detail
+    | Error _ -> body
+
+let private handle (response: HttpResponse) : GameState =
+    if response.statusCode >= 200 && response.statusCode < 300 then
+        decodeGame response.responseText
+    else
+        raise (ApiError (detailOf response.responseText))
+
+let private get (url: string) : Async<GameState> =
+    async {
+        let! response = Http.request url |> Http.method GET |> Http.send
+        return handle response
     }
 
-let createGame (playerNames: string list) : JS.Promise<GameState> =
-    let body =
-        Encode.Auto.toString (0, { PlayerNames = playerNames }, caseStrategy = SnakeCase)
+let private post (url: string) (body: string option) : Async<GameState> =
+    async {
+        let request = Http.request url |> Http.method POST
 
-    requestGame
-        "/game/new"
-        [ Method HttpMethod.POST
-          requestHeaders [ ContentType "application/json" ]
-          Body !^body ]
+        let request =
+            match body with
+            | Some json ->
+                request
+                |> Http.header (Headers.contentType "application/json")
+                |> Http.content (BodyContent.Text json)
+            | None -> request
 
-let getGame (gameId: string) : JS.Promise<GameState> =
-    requestGame (sprintf "/game/%s" gameId) []
+        let! response = Http.send request
+        return handle response
+    }
 
-let rollDice (gameId: string) : JS.Promise<GameState> =
-    requestGame (sprintf "/game/%s/roll-dice" gameId) [ Method HttpMethod.POST ]
+let private encode payload =
+    Encode.Auto.toString (space = 0, value = payload, caseStrategy = SnakeCase)
 
-let endTurn (gameId: string) : JS.Promise<GameState> =
-    requestGame (sprintf "/game/%s/end-turn" gameId) [ Method HttpMethod.POST ]
+let createGame (playerNames: string list) : Async<GameState> =
+    post "/game/new" (Some (encode { PlayerNames = playerNames }))
+
+let getGame (gameId: string) : Async<GameState> =
+    get (sprintf "/game/%s" gameId)
+
+let rollDice (gameId: string) : Async<GameState> =
+    post (sprintf "/game/%s/roll-dice" gameId) None
+
+let placeSettlement (gameId: string) (vertex: VertexCoord) : Async<GameState> =
+    post (sprintf "/game/%s/place-settlement" gameId) (Some (encode { Vertex = vertex }))
+
+let placeRoad (gameId: string) (edge: EdgeCoord) : Async<GameState> =
+    post (sprintf "/game/%s/place-road" gameId) (Some (encode { Edge = edge }))
+
+let placeCity (gameId: string) (vertex: VertexCoord) : Async<GameState> =
+    post (sprintf "/game/%s/place-city" gameId) (Some (encode { Vertex = vertex }))
+
+let buyDevCard (gameId: string) : Async<GameState> =
+    post (sprintf "/game/%s/buy-dev-card" gameId) None
+
+let tradeBank (gameId: string) (give: string) (receive: string) : Async<GameState> =
+    post (sprintf "/game/%s/trade-bank" gameId) (Some (encode { Give = give; Receive = receive }))
+
+let endTurn (gameId: string) : Async<GameState> =
+    post (sprintf "/game/%s/end-turn" gameId) None
