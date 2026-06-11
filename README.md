@@ -136,4 +136,4 @@ This is a playable scaffold, not the full ruleset yet:
 
 - Games are stored **in memory** on the server — restarting the backend clears all games.
 - Number-token placement is randomized; the official "spiral" placement (which keeps 6s and 8s apart) is a noted TODO in `server/app/game/board.py`.
-- The frontend pins React 17 to use Fable.React's stable `ReactDom.render` entry point.
+- The frontend uses React 18 (Elmish.React 4 renders through `react-dom/client`) and the Fable 5 compiler, which requires a reasonably recent .NET SDK.

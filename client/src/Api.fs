@@ -54,7 +54,8 @@ let private post (url: string) (body: string option) : Async<GameState> =
         return handle response
     }
 
-let private encode payload =
+// inline so Fable can resolve the concrete payload type for Encode.Auto
+let inline private encode payload =
     Encode.Auto.toString (space = 0, value = payload, caseStrategy = SnakeCase)
 
 let createGame (playerName: string) (numPlayers: int) : Async<GameState> =
