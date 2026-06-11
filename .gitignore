@@ -1,0 +1,20 @@
+# Node
+node_modules/
+dist/
+
+# Fable / .NET
+client/build/
+bin/
+obj/
+.fable/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

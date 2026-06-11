@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Hexlands</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Compilation order matters in F#: later files may only open earlier ones. -->
+  <ItemGroup>
+    <Compile Include="Types.fs" />
+    <Compile Include="HexGrid.fs" />
+    <Compile Include="Api.fs" />
+    <Compile Include="Board.fs" />
+    <Compile Include="Players.fs" />
+    <Compile Include="Dice.fs" />
+    <Compile Include="App.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fable.Core" Version="4.3.0" />
+    <PackageReference Include="Fable.React" Version="9.4.0" />
+    <PackageReference Include="Fable.Browser.Dom" Version="2.16.0" />
+    <PackageReference Include="Fable.Fetch" Version="2.7.0" />
+    <PackageReference Include="Fable.Promise" Version="3.2.0" />
+    <PackageReference Include="Thoth.Json" Version="10.2.0" />
+  </ItemGroup>
+
+</Project>
